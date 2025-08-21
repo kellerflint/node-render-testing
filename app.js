@@ -21,6 +21,7 @@ async function connect() {
         return conn;
     } catch (err) {
         console.log(`Error connecting to the database ${err}`)
+        throw err;
     }
 }
 
@@ -82,32 +83,35 @@ app.post('/thankyou', async (req, res) => {
         return;
     }
 
-    //Connect to the database
-    const conn = await connect();
+    try {
+        //Connect to the database
+        const conn = await connect();
 
-    //Convert toppings to a string
-    if (order.toppings) {
-        if (Array.isArray(order.toppings)) {
-            order.toppings = order.toppings.join(",");
+        //Convert toppings to a string
+        if (order.toppings) {
+            if (Array.isArray(order.toppings)) {
+                order.toppings = order.toppings.join(",");
+            }
+        } else {
+            order.toppings = "";
         }
-    } else {
-        order.toppings = "";
+
+        // Add the order to our database
+        const insertQuery = await conn.query(`INSERT INTO orders 
+            (fname, lname, email, size, method, toppings)
+            VALUES ($1, $2, $3, $4, $5, $6)`,
+            [ order.fname, order.lname, order.email, order.size, 
+            order.method, order.toppings ]);
+
+        // Release the connection back to the pool
+        conn.release();
+
+        // Send our thank you page
+        res.render('thankyou', { order });
+    } catch (err) {
+        console.error('Database error:', err);
+        res.status(500).send('Database error: ' + err.message);
     }
-
-    // Add the order to our database
-    const insertQuery = await conn.query(`INSERT INTO orders 
-        (fname, lname, email, size, method, toppings)
-        VALUES ($1, $2, $3, $4, $5, $6)`,
-        [ order.fname, order.lname, order.email, order.size, 
-        order.method, order.toppings ]);
-
-    // Release the connection back to the pool
-    conn.release();
-
-    // INSERT INTO tbl (field1, field2) VALUES (?, ?)
-    
-    // Send our thank you page
-    res.render('thankyou', { order });
 });
 
 //Tell the server to listen on our specified port
