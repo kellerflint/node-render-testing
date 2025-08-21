@@ -4,19 +4,10 @@ import pg from 'pg';
 import validateForm from './services/validation.js';
 
 //Define our database credentials
-const pool = process.env.DATABASE_URL
-    ? new pg.Pool({
-        connectionString: process.env.DATABASE_URL,
-        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-    })
-    : new pg.Pool({
-        host: process.env.DB_HOST || 'localhost',
-        user: process.env.DB_USER || 'postgres',
-        password: process.env.DB_PASSWORD || '1234',
-        database: process.env.DB_NAME || 'pizza',
-        port: process.env.DB_PORT || 5432,
-        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-    });
+const pool = new pg.Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
 
 //Define function to connect to the DB
 async function connect() {
